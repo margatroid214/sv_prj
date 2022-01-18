@@ -1,0 +1,5 @@
+/sim/*
+/sv_prj_ref/*
+!/sim/Makefile
+!/sim/filelist.f
+/.vscode/*
