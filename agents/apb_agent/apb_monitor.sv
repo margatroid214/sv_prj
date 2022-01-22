@@ -21,7 +21,7 @@ endfunction
 
 function apb_monitor::build_phase (uvm_phase phase);
   super.build_phase(phase);
-  if (!uvm_config_db#(virtual apb_if)::get(this, "*", "apb_if", apb_vif))
+  if (!uvm_config_db#(virtual apb_if)::get(this, "*", "apb_vif", apb_vif))
     `uvm_error(get_type_name(), "did not get virtual bus handle")
 endfunction
 
