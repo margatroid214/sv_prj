@@ -3,7 +3,7 @@ typedef enum bit {ODD, EVEN} parity_t;
 class uart_seq_item extends uvm_sequence_item;
 
   // uart frame data
-  rand byte data; 
+  rand bit[7:0] data; 
   rand bit parity;
   rand int frame_interval;
   rand bit[1:0] stop_bits; // take half a cycle as unit

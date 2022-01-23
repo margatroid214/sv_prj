@@ -5,6 +5,7 @@ import uvm_pkg::*;
 `include "uvm_macros.svh"
 
 import uart_reg_pkg::*;
+import uart_cfg_pkg::*;
 `include "apb_seq_item.sv"
 `include "apb_driver.sv"
 `include "apb_monitor.sv"
