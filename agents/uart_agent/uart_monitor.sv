@@ -8,7 +8,8 @@ class uart_monitor extends uvm_component;
 
   apbuart_cfg cfg;
 
-  uvm_analysis_port #(uart_seq_item) ap;  // tlm port for sending transactions out to scoreboard
+  uvm_analysis_port #(uart_seq_item) ap_scb;  // tlm port for sending transactions out to scoreboard
+  uvm_analysis_port #(uart_seq_item) ap_mdl; // tlm port for sending transactions out to reference model
 
   extern function new (string name = "apb_monitor", uvm_component parent);
   extern function void build_phase (uvm_phase phase);
@@ -20,7 +21,8 @@ endclass
 
 function uart_monitor::new (string name = "uart_monitor", uvm_component parent);
   super.new(name, parent);
-  ap = new("ap", this);
+  ap_scb = new("ap_scb", this);
+  ap_mdl = new("ap_mdl", this);
 endfunction
 
 function uart_monitor::build_phase (uvm_phase phase);
@@ -83,7 +85,7 @@ task uart_monitor::get_rx_pkg();
   disable fork
 
   trans.frame_interval = inter_frames;
-  ap.write(trans);        
+  ap_mdl.write(trans);        
 endtask
 
 task uart_monitor::get_tx_pkg();
@@ -124,5 +126,5 @@ task uart_monitor::get_tx_pkg();
   disable fork
 
   trans.frame_interval = inter_frames;
-  ap.write(trans);        
+  ap_scb.write(trans);        
 endtask

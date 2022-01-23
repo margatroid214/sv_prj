@@ -6,7 +6,8 @@ class apb_monitor extends uvm_monitor;
 
   virtual apb_if apb_vif;
 
-  uvm_analysis_port #(apb_seq_item) ap; // tlm port for sending transactions out to scoreboard
+  uvm_analysis_port #(apb_seq_item) ap_scb; // tlm port for sending transactions out to scoreboard
+  uvm_analysis_port #(apb_seq_item) ap_mdl; // tlm port for sending transactions out to reference model
 
   extern function new (string name = "apb_monitor", uvm_component parent);
   extern function void build_phase (uvm_phase phase);
@@ -16,7 +17,8 @@ endclass
 
 function apb_monitor::new (string name = "apb_monitor", uvm_component parent);
   super.new(name, parent);
-  ap = new("ap", this);
+  ap_scb = new("ap_scb", this);
+  ap_mdl = new("ap_mdl", this);
 endfunction
 
 function apb_monitor::build_phase (uvm_phase phase);
@@ -34,6 +36,14 @@ task apb_monitor::run_phase (uvm_phase phase);
     trans.addr = `APBMON_IF.paddr;
     trans.data = `APBMON_IF.pwrite ? `APBMON_IF.pwdata : `APBMON_IF.prdata;
     trans.wren = `APBMON_IF.pwrite;
-    ap.write(trans);
+    if (`APBMON_IF.pwrite) begin
+      trans.data = `APBMON_IF.pwdata;
+      ap_mdl.write(trans);  // if write, send transaction to reference model
+    end else begin
+      trans.data = `APBMON_IF.prdata;
+      // need to send to both scoreboard and reference model
+      ap_scb.write(trans);  
+      ap_mdl.write(trans); 
+    end
   end
 endtask
