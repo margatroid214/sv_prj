@@ -26,8 +26,27 @@ class apbuart_scoreboard extends uvm_scoreboard;
   task run_phase (uvm_phase phase);
     fork
       eval_apb;
+      eval_irq;
       eval_uart;
     join
+  endtask
+
+  task eval_irq ();
+    irq_t exp_tr, act_tr;
+
+    while (1) begin
+      exp_bgp_irq.get(exp_tr);
+      act_bgp_irq.get(act_tr);
+      if (exp_tr == act_tr)
+        `uvm_info(get_type_name(), "compare passed", UVM_LOW);
+      else begin
+        `uvm_error(get_type_name(), "compare failed");
+        $display("expected irq pkt is");
+        exp_tr.print();
+        $display("actual irq pkt is");
+        act_tr.print();
+      end
+    end
   endtask
 
   task eval_apb ();
@@ -50,11 +69,24 @@ class apbuart_scoreboard extends uvm_scoreboard;
 
   task eval_uart ();
     uart_seq_item exp_tr, act_tr;
+    bit com_result;
 
     while (1) begin
       exp_bgp_uart.get(exp_tr);
       act_bgp_uart.get(act_tr);
-      if 
+      com_result = act_tr.compare(exp_tr);
+      // compare frame_interval 
+      if (exp_tr.frame_interval != -1)
+        com_result = 0;
+      if (com_result)
+        `uvm_info(get_type_name(), "compare passed", UVM_LOW);
+      else begin
+        `uvm_error(get_type_name(), "compare failed");
+        $display("expected uart pkt is");
+        exp_tr.print();
+        $display("actual uart pkt is");
+        act_tr.print();
+      end
     end
   endtask
 

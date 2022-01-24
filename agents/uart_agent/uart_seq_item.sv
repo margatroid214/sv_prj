@@ -15,7 +15,7 @@ class uart_seq_item extends uvm_sequence_item;
   `uvm_object_utils(uart_seq_item)
     `uvm_field_int(data, UVM_ALL_ON);
     `uvm_field_int(parity, UVM_ALL_ON);
-    `uvm_field_int(frame_interval, UVM_ALL_ON);
+    `uvm_field_int(frame_interval, UVM_ALL_ON | UVM_NO_COMPARE);
     `uvm_field_int(stop_bit, UVM_ALL_ON);
     `uvm_field_int(parity_type, UVM_ALL_ON);
     `uvm_field_int(has_parity, UVM_ALL_ON);
