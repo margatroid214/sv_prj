@@ -57,6 +57,11 @@ task uart_driver::drive (uart_seq_item trans);
   int bit_cycles;
   bit_cycles = 26000000 / cfg.baud_rate;
 
+  // send inter-frame
+  `UARTDRIV_IF.urxd <= 'h1;
+  repeat(trans.frame_interval) begin
+    repeat(bit_cycles * 1 / 2) @`UARTDRIV_IF;
+  end
   // start bit
   `UARTDRIV_IF.urxd <= 'h0;
   repeat(bit_cycles) @`UARTDRIV_IF;
@@ -70,14 +75,9 @@ task uart_driver::drive (uart_seq_item trans);
     `UARTDRIV_IF.urxd <= trans.parity;
     repeat(bit_cycles) @`UARTDRIV_IF;
   end
-  // send stop bits
-  `UARTDRIV_IF.urxd <= 'h1;
-  repeat(trans.stop_bits) begin
-    repeat(bit_cycles * 1 / 2) @`UARTDRIV_IF;
-  end
-  // send inter-frame
-  `UARTDRIV_IF.urxd <= 'h1;
-  repeat(trans.frame_interval) begin
-    repeat(bit_cycles * 1 / 2) @`UARTDRIV_IF;
+  // send stop bit
+  if (trans.has_stop_bit) begin
+    `UARTDRIV_IF.urxd <= trans.stop_bit;
+    repeat(bit_cycles) @`UARTDRIV_IF;
   end
 endtask

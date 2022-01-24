@@ -36,14 +36,8 @@ endfunction
 function uart_monitor::run_phase(uvm_phase phase);
   wait(uart_vif.rstn);
   fork
-    begin
-      @(negedge `UARTMON_IF.urxd);
-      forever get_rx_pkg();
-    end
-    begin
-      @(negedge `UARTMON_IF.utxd);
-      forever get_tx_pkg();
-    end
+    forever get_rx_pkg();
+    forever get_tx_pkg();
   join
 endfunction
 
@@ -56,6 +50,18 @@ task uart_monitor::get_rx_pkg();
 
   int inter_frames = 0;  // number of inter-frames
 
+  fork
+    @(negedge `UARTMON_IF.urxd);  // waiting for next start bit
+    begin
+      // extract frame interval
+      while(1) begin
+        repeat(bit_cycles / 2) @`UARTMON_IF;
+        ++inter_frames;
+      end
+    end
+  join_any
+  disable fork
+
   // sample data in the middle
   repeat(bit_cycles * 3 / 2) @`UARTMON_IF;
   for (int i = 0; i < 8; i++) begin
@@ -65,24 +71,13 @@ task uart_monitor::get_rx_pkg();
   // extract parity 
   if (cfg.rx_has_parity) begin
     trans.parity = `UARTMON_IF.urxd;
+    repeat(bit_cycles) @`UARTMON_IF;
   end
-
-  fork
-    @(negedge `UARTMON_IF.urxd);  // waiting for next start bit
-    begin
-      // extract stop bits
-      repeat(bit_cycles / 2) @`UARTMON_IF;
-      repeat(cfg.rx_stop_bits) begin
-        repeat(bit_cycles / 2) @`UARTMON_IF;
-      end
-      // extract frame interval
-      while(1) begin
-        repeat(bit_cycles / 2) @`UARTMON_IF;
-        ++inter_frames;
-      end
-    end
-  join_any
-  disable fork
+  // extract stop bit
+  if (cfg.rx_has_stop_bit) begin
+    trans.stop_bit = `UARTMON_IF.urxd;
+    repeat(bit_cycles) @`UARTMON_IF;
+  end
 
   trans.frame_interval = inter_frames;
   ap_mdl.write(trans);        
@@ -97,6 +92,18 @@ task uart_monitor::get_tx_pkg();
 
   int inter_frames = 0;  // number of inter-frames
 
+  fork
+    @(negedge `UARTMON_IF.utxd);  // waiting for next start bit
+    begin
+      // extract frame interval
+      while(1) begin
+        repeat(bit_cycles / 2) @`UARTMON_IF;
+        ++inter_frames;
+      end
+    end
+  join_any
+  disable fork
+
   // sample data in the middle
   repeat(bit_cycles * 3 / 2) @`UARTMON_IF;
   for (int i = 0; i < 8; i++) begin
@@ -106,24 +113,13 @@ task uart_monitor::get_tx_pkg();
   // extract parity 
   if (cfg.tx_has_parity) begin
     trans.parity = `UARTMON_IF.utxd;
+    repeat(bit_cycles) @`UARTMON_IF;
   end
-
-  fork
-    @(negedge `UARTMON_IF.utxd);  // waiting for next start bit
-    begin
-      // extract stop bits
-      repeat(bit_cycles / 2) @`UARTMON_IF;
-      repeat(cfg.tx_stop_bits) begin
-        repeat(bit_cycles / 2) @`UARTMON_IF;
-      end
-      // extract frame interval
-      while(1) begin
-        repeat(bit_cycles / 2) @`UARTMON_IF;
-        ++inter_frames;
-      end
-    end
-  join_any
-  disable fork
+  // extract stop bit
+  if (cfg.tx_has_stop_bit) begin
+    trans.stop_bit = `UARTMON_IF.utxd;
+    repeat(bit_cycles) @`UARTMON_IF;
+  end
 
   trans.frame_interval = inter_frames;
   ap_scb.write(trans);        

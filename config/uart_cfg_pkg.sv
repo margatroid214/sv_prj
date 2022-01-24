@@ -22,13 +22,15 @@ class apbuart_cfg extends uvm_object;
 
   rand bit [31:0] baud_rate;
 
-  rand bit [1:0] tx_stop_bits;
-  rand bit [1:0] rx_stop_bits;
+  rand bit [1:0] tx_has_stop_bit;
+  rand bit [1:0] rx_has_stop_bit;
 
   `uvm_object_utils_begin(apbuart_cfg)
     `uvm_field_int(tx_has_parity, UVM_ALL_ON);
     `uvm_field_int(tx_has_parity, UVM_ALL_ON);
     `uvm_field_int(baud_rate, UVM_ALL_ON);
+    `uvm_field_int(tx_has_stop_bit, UVM_ALL_ON);
+    `uvm_field_int(rx_has_stop_bit, UVM_ALL_ON);
   `uvm_object_utils_end
 
   function new (string name = "apbuart_cfg");

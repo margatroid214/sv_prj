@@ -15,7 +15,7 @@ class apb_seq_item extends uvm_sequence_item;
     `uvm_field_int (addr, UVM_ALL_ON);
     `uvm_field_int (data, UVM_ALL_ON);
     `uvm_field_int (wren, UVM_ALL_ON);
-    `uvm_field_int (interval, UVM_ALL_ON);
+    `uvm_field_int (interval, UVM_ALL_ON | UVM_NO_COMPARE);
   `uvm_object_utils_end
 
 endclass
