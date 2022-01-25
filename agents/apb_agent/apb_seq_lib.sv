@@ -1,7 +1,7 @@
 // base class for apb sequence
 class apb_base_seq extends uvm_sequence #(apb_seq_item);
   `uvm_object_utils(apb_base_seq)
-  `uvm_object_p_sequencer(vsequencer)
+  `uvm_declare_p_sequencer(vsequencer)
 
   apb_seq_item apb_trans;
 

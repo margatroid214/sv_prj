@@ -1,4 +1,4 @@
-interface apb_if (input pclk, presetn)
+interface apb_if (input pclk, presetn);
 
   logic [31:0]  paddr;
   logic [31:0]  pwdata;

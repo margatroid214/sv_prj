@@ -5,6 +5,13 @@ module top_tb;
   import uart_agent_pkg::*;
   import uart_cfg_pkg::*;
 
+  `include "vsequencer.sv"
+  `include "apbuart_vseq_lib.sv"
+  `include "apbuart_model.sv"
+  `include "apbuart_scoreboard.sv"
+  `include "apbuart_env.sv"
+  `include "apbuart_test_lib.sv"
+
   bit pclk, presetn;
   bit uclk, uresetn;
 

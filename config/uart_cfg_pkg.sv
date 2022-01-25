@@ -1,5 +1,8 @@
 package uart_cfg_pkg;
 
+import uvm_pkg::*;
+`include "uvm_macros.svh"
+
 // macros if didnt use register model
 `define UART_TXD 32'h0000
 `define UART_RXD 32'h0004
@@ -31,18 +34,7 @@ class apbuart_cfg extends uvm_object;
   rand bit [3:0] rx_trig_depth;
   rand bit [3:0] tx_ifs;
 
-  `uvm_object_utils_begin(apbuart_cfg)
-    `uvm_field_int(tx_has_parity, UVM_ALL_ON);
-    `uvm_field_int(tx_has_parity, UVM_ALL_ON);
-    `uvm_field_int(baud_rate, UVM_ALL_ON);
-    `uvm_field_int(tx_has_stop_bit, UVM_ALL_ON);
-    `uvm_field_int(rx_has_stop_bit, UVM_ALL_ON);
-
-    `uvm_field_int(parity_type, UVM_ALL_ON);
-    `uvm_field_int(tx_trig_depth, UVM_ALL_ON);
-    `uvm_field_int(rx_trig_depth, UVM_ALL_ON);
-    `uvm_field_int(tx_ifs, UVM_ALL_ON);
-  `uvm_object_utils_end
+  `uvm_object_utils(apbuart_cfg)
 
   function new (string name = "apbuart_cfg");
     super.new(name);
