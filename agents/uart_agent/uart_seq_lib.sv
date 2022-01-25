@@ -8,3 +8,7 @@ class uart_base_seq extends uvm_sequence #(uart_seq_item);
     super.new(name);
   endfunction
 endclass
+
+class uart_rx_seq extends uart_base_seq;
+  `uvm_object_utils(uart_rx_seq)
+endclass

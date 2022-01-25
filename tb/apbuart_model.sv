@@ -14,6 +14,7 @@ class apbuart_model extends uvm_component;
 
   /**** variables representing apbuart state ****/
   logic [7:0] rx_queue[$]; // rx uart data queue
+  logic [7:0] tx_queue[$]; // tx uart data queue
   
   // registers
   logic [31:0] apbuart_regs[*];
@@ -58,21 +59,29 @@ class apbuart_model extends uvm_component;
       if (trans_i.wren) begin   // apb write transaction
         case (trans_i.addr[7:0])
           `UART_TXD : begin
-            uart_tr_o = uart_seq_item::type_id::create("uart_tr_o");
-            // packing tx data
-            uart_tr_o.data = trans_i.data;
-            uart_tr_o.has_parity = apbuart_regs[`UART_CFG][0];
-            uart_tr_o.has_stop_bit = apbuart_regs[`UART_CFG][3];
-            uart_tr_o.parity_type = apbuart_regs[`UART_CFG][1] ? ODD : EVEN;
-            uart_tr_o.parity = uart_tr_o.calc_parity(uart_tr_o.parity_type);
-            uart_tr_o.stop_bit = 'b1;
-            uart_tr_o.frame_interval = apbuart_regs[`UART_TDL][5:0] > 1 ? apbuart_regs[`UART_IFS][3:0] : -1;  // -1 means don't care
-            // transmit
-            ap_uart.write(uart_tr_o);
+            if (tx_queue.size() < 16)
+              tx_queue.push_back(trans_i.data);
           end
           `UART_RXD, `UART_RDL, `UART_TDL : ;   // read only
           default : apbuart_regs[trans_i.addr] = trans_i.data; 
         endcase
+        if (apbuart_regs[`UART_CFG][14]) // tx fifo reset
+          tx_queue.delete();     
+        if (apbuart_regs[`UART_CFG][15])  // rx fifo reset
+          rx_queue.delete();
+        if (tx_queue.size() > 0) begin
+          uart_tr_o = uart_seq_item::type_id::create("uart_tr_o");
+          // packing tx data
+          uart_tr_o.data = tx_queue.pop_front();
+          uart_tr_o.has_parity = apbuart_regs[`UART_CFG][0];
+          uart_tr_o.has_stop_bit = apbuart_regs[`UART_CFG][3];
+          uart_tr_o.parity_type = apbuart_regs[`UART_CFG][1] ? ODD : EVEN;
+          uart_tr_o.parity = uart_tr_o.calc_parity(uart_tr_o.parity_type);
+          uart_tr_o.stop_bit = 'b1;
+          uart_tr_o.frame_interval = apbuart_regs[`UART_TDL][5:0] > 1 ? apbuart_regs[`UART_IFS][3:0] : -1;  // -1 means don't care
+          // transmit
+          ap_uart.write(uart_tr_o);
+        end
       end else begin    // apb read transaction
         trans_o = apb_seq_item::type_id::create("trans_o");
         trans_o.copy(trans_i); 

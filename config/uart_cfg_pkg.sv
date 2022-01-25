@@ -15,7 +15,7 @@ package uart_cfg_pkg;
 // apbuart global config; mainly for monitor to parse data pack
 class apbuart_cfg extends uvm_object;
   uvm_active_passive_enum is_tx_active = UVM_ACTIVE;
-  uvm_active_passive_enum is_rx_active = UVM_PASSIVE;
+  uvm_active_passive_enum is_rx_active = UVM_ACTIVE;
 
   rand bit tx_has_parity;
   rand bit rx_has_parity;
@@ -25,12 +25,23 @@ class apbuart_cfg extends uvm_object;
   rand bit [1:0] tx_has_stop_bit;
   rand bit [1:0] rx_has_stop_bit;
 
+  // extension
+  rand bit parity_type;
+  rand bit [3:0] tx_trig_depth;
+  rand bit [3:0] rx_trig_depth;
+  rand bit [3:0] tx_ifs;
+
   `uvm_object_utils_begin(apbuart_cfg)
     `uvm_field_int(tx_has_parity, UVM_ALL_ON);
     `uvm_field_int(tx_has_parity, UVM_ALL_ON);
     `uvm_field_int(baud_rate, UVM_ALL_ON);
     `uvm_field_int(tx_has_stop_bit, UVM_ALL_ON);
     `uvm_field_int(rx_has_stop_bit, UVM_ALL_ON);
+
+    `uvm_field_int(parity_type, UVM_ALL_ON);
+    `uvm_field_int(tx_trig_depth, UVM_ALL_ON);
+    `uvm_field_int(rx_trig_depth, UVM_ALL_ON);
+    `uvm_field_int(tx_ifs, UVM_ALL_ON);
   `uvm_object_utils_end
 
   function new (string name = "apbuart_cfg");
