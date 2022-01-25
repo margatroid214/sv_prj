@@ -22,6 +22,8 @@ class uart_seq_item extends uvm_sequence_item;
     `uvm_field_int(has_stop_bit, UVM_ALL_ON);
   `uvm_object_utils_end
 
+  constraint ifs_constr { frame_interval < 10;}
+
   function new (string name = "uart_seq_item");
     super.new(name);
   endfunction 

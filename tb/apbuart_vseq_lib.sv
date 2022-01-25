@@ -3,10 +3,16 @@ class apbuart_vseq_base extends uvm_sequence;
   `uvm_declare_p_sequencer(vsequencer)
 
   apb_sequencer apb_sqr;
+  uart_sequencer uart_sqr;
 
   function new (string name = "apbuart_vseq_base");
     super.new(name);
   endfunction
+
+  task body();
+    apb_sqr = p_sequencer.apb_sqr;
+    uart_sqr = p_sequencer.uart_sqr;
+  endtask
 endclass
 
 class apbuart_wr_rd_seq extends apbuart_vseq_base;
@@ -17,6 +23,7 @@ class apbuart_wr_rd_seq extends apbuart_vseq_base;
   endfunction
 
   task body ();
+    super.body();
     reg_wr_rd_seq apbuart_seq;
     `uvm_do_on(apbuart_seq, apb_sqr);
   endtask
