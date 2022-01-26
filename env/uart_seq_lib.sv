@@ -11,15 +11,16 @@ endclass
 
 class uart_rx_seq extends uart_base_seq;
   `uvm_object_utils(uart_rx_seq)
+  `uvm_declare_p_sequencer(vsequencer)
 
   function new (string name = "uart_rx_seq");
     super.new(name);
   endfunction
 
   task body ();
+    apbuart_cfg cfg = p_sequencer.cfg;
     super.body();
     uart_trans = uart_seq_item::type_id::create("uart_trans");
-    apbuart_cfg cfg = p_sequencer.cfg;
 
     `uvm_do_with(uart_trans, {
                               uart_trans.has_parity == cfg.rx_has_parity;

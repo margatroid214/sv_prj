@@ -1,5 +1,4 @@
 // module declaration
-`timescale 1ns/1ps
 
 module    UART_TOP(
     //inputs

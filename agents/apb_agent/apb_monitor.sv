@@ -25,9 +25,9 @@ function apb_monitor::new (string name = "apb_monitor", uvm_component parent);
   ap_mdl = new("ap_mdl", this);
 endfunction
 
-function apb_monitor::build_phase (uvm_phase phase);
+function void apb_monitor::build_phase (uvm_phase phase);
   super.build_phase(phase);
-  if (!uvm_config_db#(virtual apb_if)::get(this, "*", "apb_vif", apb_vif))
+  if (!uvm_config_db#(virtual apb_if)::get(this, "", "apb_vif", apb_vif))
     `uvm_error(get_type_name(), "did not get virtual bus handle")
 endfunction
 
@@ -42,18 +42,18 @@ task apb_monitor::apb_wr_rd_mon;
   apb_seq_item trans;
 
   forever begin
-    wait(`APBMON_IF.psel & `APBMON_IF.penable & apb_vif.presetn);
+    wait(apb_vif.psel & apb_vif.penable & apb_vif.presetn);
     trans = apb_seq_item::type_id::create("trans");
-    trans.addr = `APBMON_IF.paddr;
-    trans.data = `APBMON_IF.pwrite ? `APBMON_IF.pwdata : `APBMON_IF.prdata;
-    trans.wren = `APBMON_IF.pwrite;
-    if (`APBMON_IF.pwrite) begin
-      trans.data = `APBMON_IF.pwdata;
+    trans.addr = apb_vif.paddr;
+    trans.data = apb_vif.pwrite ? apb_vif.pwdata : apb_vif.prdata;
+    trans.wren = apb_vif.pwrite;
+    if (apb_vif.pwrite) begin
+      trans.data = apb_vif.pwdata;
       ap_mdl.write(trans);  // if write, send transaction to reference model
     end else begin
-      trans.data = `APBMON_IF.prdata;
+      trans.data = apb_vif.prdata;
       // need to send to both scoreboard and reference model
-      ap_mdl.write(trans.copy()); 
+      //ap_mdl.write(trans.copy()); 
       ap_scb_apb.write(trans);  
     end
   end
@@ -63,12 +63,12 @@ task apb_monitor::irq_mon;
   irq_t trans;
 
   forever begin
-    if (`APBMON_IF.uart_int) begin
-      @(negedge `APBMON_IF.uart_int);
+    if (apb_vif.uart_int) begin
+      @(negedge apb_vif.uart_int);
       trans = FELL;
       ap_scb_irq.write(trans);
     end else begin
-      @(posedge `APBMON_IF.uart_int);
+      @(posedge apb_vif.uart_int);
       trans = ROSE;
       ap_scb_irq.write(trans);
     end

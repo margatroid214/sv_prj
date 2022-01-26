@@ -1,5 +1,3 @@
-import uart_cfg_pkg::*
-
 class apbuart_model extends uvm_component;
 
   `uvm_component_utils(apbuart_model)
@@ -34,7 +32,7 @@ class apbuart_model extends uvm_component;
   endfunction
 
   function void build_phase (uvm_phase phase);
-    super.new(name, parent);
+    super.build_phase(phase);
     bgp_apb   = new ("bgp_apb", this);
     ap_apb    = new ("ap_apb", this);
     bgp_uart  = new ("bgp_uart", this);
@@ -117,11 +115,11 @@ class apbuart_model extends uvm_component;
       // verify parity
       case (apbuart_regs[`UART_CFG][1:0])
         'b11 : begin    // verify odd parity
-          if (trans_i.parity != trans.calc_parity(ODD))
+          if (trans_i.parity != trans_i.calc_parity(ODD))
             apbuart_regs[`UART_SR][2] = 'b1;
         end
         'b01 : begin    // verify even parity
-          if (trans_i.parity != trans.calc_parity(EVEN))
+          if (trans_i.parity != trans_i.calc_parity(EVEN))
             apbuart_regs[`UART_SR][2] = 'b1;
         end
         default : ;

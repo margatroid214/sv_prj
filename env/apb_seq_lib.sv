@@ -13,13 +13,13 @@ endclass
 
 class reg_wr_rd_seq extends apb_base_seq;
   `uvm_object_utils(reg_wr_rd_seq)
+  `uvm_declare_p_sequencer(vsequencer)
 
-  function new (string name = "reg_wr_rd_seq")
+  function new (string name = "reg_wr_rd_seq");
     super.new(name);
   endfunction
 
   task body ();
-    super.body();
     apb_trans = apb_seq_item::type_id::create("apb_trans");
 
     // read all registers after write
@@ -41,17 +41,18 @@ endclass
 
 class uart_cfg_seq extends apb_base_seq;
   `uvm_object_utils(uart_cfg_seq)
+  `uvm_declare_p_sequencer(vsequencer)
 
-  function new (string name = "uart_cfg_seq")
+  function new (string name = "uart_cfg_seq");
     super.new(name);
   endfunction
 
   task body ();
-    super.body();
-    apb_trans = apb_seq_item::type_id::create("apb_trans");
-
     bit [31:0] tx_data;
     apbuart_cfg cfg = p_sequencer.cfg;
+
+    super.body();
+    apb_trans = apb_seq_item::type_id::create("apb_trans");
 
     // config baud rate
     `uvm_do_with(apb_trans, {
@@ -87,9 +88,10 @@ class uart_cfg_seq extends apb_base_seq;
 endclass
 
 class uart_tx_seq extends apb_base_seq;
-  `uvm_object_utils(reg_robust_test_seq)
+  `uvm_object_utils(uart_tx_seq)
+  `uvm_declare_p_sequencer(vsequencer)
 
-  function new (string name = "uart_tx_seq")
+  function new (string name = "uart_tx_seq");
     super.new(name);
   endfunction
 
@@ -105,9 +107,10 @@ endclass
 
 
 class check_status_seq extends apb_base_seq;
-  `uvm_object_utils(reg_robust_test_seq)
+  `uvm_object_utils(check_status_seq)
+  `uvm_declare_p_sequencer(vsequencer)
 
-  function new (string name = "check_status_seq")
+  function new (string name = "check_status_seq");
     super.new(name);
   endfunction
 
@@ -134,9 +137,10 @@ class check_status_seq extends apb_base_seq;
 endclass
 
 class clear_irq_seq extends apb_base_seq;
-  `uvm_object_utils(reg_robust_test_seq)
+  `uvm_object_utils(clear_irq_seq)
+  `uvm_declare_p_sequencer(vsequencer)
 
-  function new (string name = "clear_irq_seq")
+  function new (string name = "clear_irq_seq");
     super.new(name);
   endfunction
 
@@ -152,13 +156,16 @@ class clear_irq_seq extends apb_base_seq;
 endclass
 
 class illegal_op_seq extends apb_base_seq;
-  `uvm_object_utils(reg_robust_test_seq)
+  `uvm_object_utils(illegal_op_seq)
+  `uvm_declare_p_sequencer(vsequencer)
 
-  function new (string name = "illegal_op_seq")
+  function new (string name = "illegal_op_seq");
     super.new(name);
   endfunction
 
   task body ();
+    bit [31:0] tx_data;
+    apbuart_cfg cfg = p_sequencer.cfg;
     super.body();
     apb_trans = apb_seq_item::type_id::create("apb_trans");
     /*** illegal addr ***/
@@ -174,8 +181,6 @@ class illegal_op_seq extends apb_base_seq;
                             }); 
     /*** reserved region ***/
     // write
-    bit [31:0] tx_data;
-    apbuart_cfg cfg = p_sequencer.cfg;
     `uvm_do_with(apb_trans, {
                               apb_trans.wren == 'b1;
                               apb_trans.addr == `UART_DIV;

@@ -16,15 +16,16 @@ class apbuart_vseq_base extends uvm_sequence;
 endclass
 
 class apbuart_wr_rd_seq extends apbuart_vseq_base;
-  `uvm_object_utils(apb_wr_rd_seq)
+  `uvm_object_utils(apbuart_wr_rd_seq)
+  `uvm_declare_p_sequencer(vsequencer)
 
   function new (string name = "apb_wr_rd_seq");
     super.new(name);
   endfunction
 
   task body ();
-    super.body();
     reg_wr_rd_seq apbuart_seq;
+    super.body();
     `uvm_do_on(apbuart_seq, apb_sqr);
   endtask
 endclass

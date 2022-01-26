@@ -1,22 +1,18 @@
+import uvm_pkg::*;
+`include "uvm_macros.svh"
+import apb_agent_pkg::*;
+import uart_agent_pkg::*;
+import uart_cfg_pkg::*;
+import apbuart_env_pkg::*;
+
 module top_tb;
 
-  import uvm_pkg::*;
-  import apb_agent_pkg::*;
-  import uart_agent_pkg::*;
-  import uart_cfg_pkg::*;
-
-  `include "vsequencer.sv"
-  `include "apbuart_vseq_lib.sv"
-  `include "apbuart_model.sv"
-  `include "apbuart_scoreboard.sv"
-  `include "apbuart_env.sv"
-  `include "apbuart_test_lib.sv"
 
   bit pclk, presetn;
   bit uclk, uresetn;
 
-  apb_if APB(.pclk(pclk), presetn(presetn));
-  uart_if UART(.clk(uclk), rstn(uresetn));
+  apb_if APB(.pclk(pclk), .presetn(presetn));
+  uart_if UART(.clk(uclk), .rstn(uresetn));
 
   UART_TOP DUT (
     .clk        (pclk),
@@ -36,8 +32,8 @@ module top_tb;
 
   // set virtual interface handling and run test
   initial begin
-    uvm_config_db #(virtual apb_if)::set(null, "uvm_test_top", "APB", APB);
-    uvm_config_db #(virtual uart_if)::set(null, "uvm_test_top", "UART", UART);
+    uvm_config_db #(virtual apb_if)::set(uvm_root::get(), "*", "apb_vif", APB);
+    uvm_config_db #(virtual uart_if)::set(uvm_root::get(), "*", "uart_vif", UART);
     run_test();
   end
 

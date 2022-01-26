@@ -33,7 +33,7 @@ interface apb_if (input pclk, presetn);
   endclocking
 
   // modports
-  modport DRIVER  (clocking driver_cb, input pclk, presetn);
-  modport MONITOR (clocking monitor_cb, input pclk, presetn);
+  modport DRIVER  (clocking driver_cb, input pclk, input presetn);
+  modport MONITOR (clocking monitor_cb, input pclk, input presetn);
 
 endinterface
