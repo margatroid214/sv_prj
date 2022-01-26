@@ -55,12 +55,12 @@ endtask
 
 task uart_driver::drive (uart_seq_item trans);
   int bit_cycles;
-  bit_cycles = 26000000 / cfg.baud_rate;
+  bit_cycles = 16 * cfg.baud_div;
 
   // send inter-frame
   uart_vif.urxd <= 'h1;
   repeat(trans.frame_interval) begin
-    repeat(bit_cycles * 1 / 2) @(posedge uart_vif.clk);
+    repeat(bit_cycles) @(posedge uart_vif.clk);
   end
   // start bit
   uart_vif.urxd <= 'h0;

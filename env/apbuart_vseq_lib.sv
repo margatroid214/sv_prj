@@ -17,15 +17,38 @@ endclass
 
 class apbuart_wr_rd_seq extends apbuart_vseq_base;
   `uvm_object_utils(apbuart_wr_rd_seq)
-  `uvm_declare_p_sequencer(vsequencer)
 
-  function new (string name = "apb_wr_rd_seq");
+  function new (string name = "apbuart_wr_rd_seq");
     super.new(name);
   endfunction
 
   task body ();
     reg_wr_rd_seq apbuart_seq;
     super.body();
-    `uvm_do_on(apbuart_seq, apb_sqr);
+    apbuart_seq = reg_wr_rd_seq::type_id::create("apbuart_seq");
+    apbuart_seq.cfg = p_sequencer.cfg;
+    apbuart_seq.start(apb_sqr);
+  endtask
+endclass
+
+class apbuart_tx_seq extends apbuart_vseq_base;
+  `uvm_object_utils(apbuart_tx_seq)
+
+  function new (string name = "apbuart_tx_seq");
+    super.new(name);
+  endfunction
+
+  task body ();
+    uart_cfg_seq cfg_seq;
+    uart_tx_seq  tx_seq;
+    super.body();
+    cfg_seq = uart_cfg_seq::type_id::create("cfg_seq");
+    tx_seq = uart_tx_seq::type_id::create("tx_seq");
+    cfg_seq.cfg = p_sequencer.cfg;
+    tx_seq.cfg = p_sequencer.cfg;
+    cfg_seq.start(apb_sqr);
+    repeat(4) begin
+      tx_seq.start(apb_sqr);
+    end
   endtask
 endclass

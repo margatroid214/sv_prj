@@ -8,14 +8,18 @@ class apbuart_model extends uvm_component;
   uvm_blocking_get_port #(uart_seq_item) bgp_uart;
   uvm_analysis_port #(uart_seq_item) ap_uart;
 
-  uvm_analysis_port #(irq_t) ap_irq;
-
   /**** variables representing apbuart state ****/
   logic [7:0] rx_queue[$]; // rx uart data queue
   logic [7:0] tx_queue[$]; // tx uart data queue
   
   // registers
   logic [31:0] apbuart_regs[*];
+
+  // virtual interface
+  virtual uart_if uart_vif;
+
+  event bpsclk;
+  int baud_cnt;
 
   function new (string name = "apbuart_model", uvm_component parent);
     super.new(name, parent);
@@ -37,28 +41,32 @@ class apbuart_model extends uvm_component;
     ap_apb    = new ("ap_apb", this);
     bgp_uart  = new ("bgp_uart", this);
     ap_uart   = new ("ap_uart", this);
+    if (!uvm_config_db#(virtual uart_if)::get(this, "", "uart_vif", uart_vif))
+      `uvm_error(get_type_name(), "did not get virtual bus handle")
   endfunction
 
-  task main_phase (uvm_phase phase);
-    super.main_phase(phase);
+  task run_phase (uvm_phase phase);
+    super.run_phase(phase);
     fork
       apb_handle;
-      irq_handle;
-      uart_handle;
+      uart_tx_handle;
+      uart_rx_handle;
+      bpsclk_gen;
     join 
   endtask
 
   task apb_handle ();
     apb_seq_item trans_i, trans_o;
-    uart_seq_item uart_tr_o;
+    baud_cnt = 16 * apbuart_regs[`UART_DIV][9:0];
 
     forever begin
       bgp_apb.get(trans_i);
       if (trans_i.wren) begin   // apb write transaction
         case (trans_i.addr[7:0])
           `UART_TXD : begin
-            if (tx_queue.size() < 16)
+            if (tx_queue.size() < 16) begin
               tx_queue.push_back(trans_i.data);
+            end
           end
           `UART_RXD, `UART_RDL, `UART_TDL : ;   // read only
           default : apbuart_regs[trans_i.addr] = trans_i.data; 
@@ -67,19 +75,8 @@ class apbuart_model extends uvm_component;
           tx_queue.delete();     
         if (apbuart_regs[`UART_CFG][15])  // rx fifo reset
           rx_queue.delete();
-        if (tx_queue.size() > 0) begin
-          uart_tr_o = uart_seq_item::type_id::create("uart_tr_o");
-          // packing tx data
-          uart_tr_o.data = tx_queue.pop_front();
-          uart_tr_o.has_parity = apbuart_regs[`UART_CFG][0];
-          uart_tr_o.has_stop_bit = apbuart_regs[`UART_CFG][3];
-          uart_tr_o.parity_type = apbuart_regs[`UART_CFG][1] ? ODD : EVEN;
-          uart_tr_o.parity = uart_tr_o.calc_parity(uart_tr_o.parity_type);
-          uart_tr_o.stop_bit = 'b1;
-          uart_tr_o.frame_interval = apbuart_regs[`UART_TDL][5:0] > 1 ? apbuart_regs[`UART_IFS][3:0] : -1;  // -1 means don't care
-          // transmit
-          ap_uart.write(uart_tr_o);
-        end
+        // baud count update
+        baud_cnt = 16 * apbuart_regs[`UART_DIV][9:0];
       end else begin    // apb read transaction
         trans_o = apb_seq_item::type_id::create("trans_o");
         trans_o.copy(trans_i); 
@@ -91,6 +88,7 @@ class apbuart_model extends uvm_component;
     end  
   endtask
 
+/*
   task irq_handle ();
     irq_t trans;
 
@@ -106,8 +104,35 @@ class apbuart_model extends uvm_component;
       end
     end
   endtask
+  */
+  task uart_tx_handle ();
+    uart_seq_item uart_tr_o;
+    int transfer_bits;
 
-  task uart_handle ();
+    forever begin
+      if (tx_queue.size() > 0) begin
+        uart_tr_o = uart_seq_item::type_id::create("uart_tr_o");
+        // packing tx data
+        uart_tr_o.data = tx_queue.pop_front();
+        uart_tr_o.has_parity = apbuart_regs[`UART_CFG][0];
+        uart_tr_o.has_stop_bit = apbuart_regs[`UART_CFG][2];
+        uart_tr_o.parity_type = apbuart_regs[`UART_CFG][1] ? ODD : EVEN;
+        uart_tr_o.parity = uart_tr_o.calc_parity(uart_tr_o.parity_type);
+        uart_tr_o.stop_bit = 'b1;
+        uart_tr_o.frame_interval = apbuart_regs[`UART_TDL][5:0] > 1 ? apbuart_regs[`UART_IFS][3:0] : -1;  // -1 means don't care
+        // transmit
+        transfer_bits = (8 + uart_tr_o.has_stop_bit + uart_tr_o.has_parity);
+        if (uart_tr_o.frame_interval != -1)
+          transfer_bits += uart_tr_o.frame_interval;
+        repeat(transfer_bits) @bpsclk;
+        ap_uart.write(uart_tr_o);
+      end else begin
+        @bpsclk;    
+      end
+    end
+  endtask
+
+  task uart_rx_handle ();
     uart_seq_item trans_i;
 
     forever begin
@@ -132,6 +157,20 @@ class apbuart_model extends uvm_component;
       // if pass verification, sent to rx queue
       if (apbuart_regs[`UART_SR][3:2] == 'b00 && rx_queue.size <= 16)
         rx_queue.push_back(trans_i.data);
+    end
+  endtask
+
+  task bpsclk_gen ();
+    int cnt = 0;
+    wait(uart_vif.rstn);
+    forever begin
+      @(posedge uart_vif.clk);
+      if (cnt == baud_cnt) begin
+        cnt = 0;
+        -> bpsclk;
+      end else begin
+        ++cnt;
+      end
     end
   endtask
 

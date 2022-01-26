@@ -2,6 +2,7 @@ interface uart_if (input clk, rstn);
 
   logic     urxd;
   logic     utxd;
+  logic     needle;
 
   // clocking blocks
   clocking driver_cb @ (posedge clk);

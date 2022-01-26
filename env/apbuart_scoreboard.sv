@@ -5,9 +5,6 @@ class apbuart_scoreboard extends uvm_scoreboard;
   uvm_blocking_get_port #(apb_seq_item) exp_bgp_apb;
   uvm_blocking_get_port #(apb_seq_item) act_bgp_apb;
 
-  uvm_blocking_get_port #(irq_t) exp_bgp_irq;
-  uvm_blocking_get_port #(irq_t) act_bgp_irq;
-
   uvm_blocking_get_port #(uart_seq_item) exp_bgp_uart;
   uvm_blocking_get_port #(uart_seq_item) act_bgp_uart;
 
@@ -26,25 +23,8 @@ class apbuart_scoreboard extends uvm_scoreboard;
   task run_phase (uvm_phase phase);
     fork
       eval_apb;
-      eval_irq;
       eval_uart;
     join
-  endtask
-
-  task eval_irq ();
-    irq_t exp_tr, act_tr;
-
-    while (1) begin
-      exp_bgp_irq.get(exp_tr);
-      act_bgp_irq.get(act_tr);
-      if (exp_tr == act_tr) begin
-        `uvm_info(get_type_name(), "compare passed", UVM_LOW);
-      end else begin
-        `uvm_error(get_type_name(), "compare failed");
-        $display("expected irq pkt is");
-        $display("actual irq pkt is");
-      end
-    end
   endtask
 
   task eval_apb ();
@@ -74,8 +54,8 @@ class apbuart_scoreboard extends uvm_scoreboard;
       act_bgp_uart.get(act_tr);
       com_result = act_tr.compare(exp_tr);
       // compare frame_interval 
-      if (exp_tr.frame_interval != -1)
-        com_result = 0;
+      //if (exp_tr.frame_interval != -1)
+      //  com_result = 0;
       if (com_result) begin
         `uvm_info(get_type_name(), "compare passed", UVM_LOW);
       end else begin

@@ -13,7 +13,7 @@ class apbuart_cfg extends uvm_object;
   rand bit tx_has_parity;
   rand bit rx_has_parity;
 
-  rand bit [31:0] baud_rate;
+  rand bit [9:0] baud_div;
 
   rand bit [1:0] tx_has_stop_bit;
   rand bit [1:0] rx_has_stop_bit;

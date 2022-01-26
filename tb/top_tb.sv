@@ -27,7 +27,8 @@ module top_tb;
     .urxd_i     (UART.urxd),
     .prdata_o   (APB.prdata),
     .utxd_o     (UART.utxd),
-    .uart_int_o (APB.uart_int)
+    .uart_int_o (APB.uart_int),
+    .needle     (UART.needle)
   );
 
   // set virtual interface handling and run test
@@ -45,7 +46,7 @@ module top_tb;
 
   initial begin
     presetn = 0;
-    repeat(10) @(negedge pclk);
+    repeat(40) @(negedge pclk);
     presetn = 1;
   end
 

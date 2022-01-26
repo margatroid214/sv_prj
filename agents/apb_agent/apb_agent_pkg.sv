@@ -3,8 +3,6 @@
 
 package apb_agent_pkg;
 
-typedef enum bit {ROSE, FELL} irq_t;
-
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 

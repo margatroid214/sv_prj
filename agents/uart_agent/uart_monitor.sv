@@ -47,16 +47,15 @@ task uart_monitor::get_rx_pkg();
   uart_seq_item trans;
   trans = uart_seq_item::type_id::create("trans");
 
-  bit_cycles = 26000000 / cfg.baud_rate;
+  bit_cycles = 16 * (cfg.baud_div + 1);
 
   fork
     @(negedge uart_vif.urxd);  // waiting for next start bit
     begin
       // extract frame interval
       while(1) begin
-        repeat(bit_cycles / 2) @(posedge uart_vif.clk);
+        repeat(bit_cycles) @(posedge uart_vif.clk);
         ++inter_frames;
-        $display("uart monitor:%d\n", (bit_cycles / 2));
       end
     end
   join_any
@@ -76,7 +75,6 @@ task uart_monitor::get_rx_pkg();
   // extract stop bit
   if (cfg.rx_has_stop_bit) begin
     trans.stop_bit = uart_vif.urxd;
-    repeat(bit_cycles) @(posedge uart_vif.clk);
   end
 
   trans.frame_interval = inter_frames;
@@ -89,14 +87,16 @@ task uart_monitor::get_tx_pkg();
   uart_seq_item trans;
   trans = uart_seq_item::type_id::create("trans");
 
-  bit_cycles = 26000000 / cfg.baud_rate;
+  bit_cycles = 16 * (cfg.baud_div + 1);
 
   fork
     @(negedge uart_vif.utxd);  // waiting for next start bit
     begin
       // extract frame interval
       while(1) begin
-        repeat(bit_cycles / 2) @(posedge uart_vif.clk);
+        uart_vif.needle <= 1;
+        @(posedge uart_vif.clk) uart_vif.needle <= 0;
+        repeat(bit_cycles) @(posedge uart_vif.clk);
         ++inter_frames;
       end
     end
@@ -106,18 +106,24 @@ task uart_monitor::get_tx_pkg();
   // sample data in the middle
   repeat(bit_cycles * 3 / 2) @(posedge uart_vif.clk);
   for (int i = 0; i < 8; i++) begin
+    uart_vif.needle <= 1;
+    @(posedge uart_vif.clk) uart_vif.needle <= 0;
     trans.data[i] = uart_vif.utxd;
     repeat(bit_cycles) @(posedge uart_vif.clk);
   end
   // extract parity 
   if (cfg.tx_has_parity) begin
     trans.parity = uart_vif.utxd;
+    uart_vif.needle <= 1;
+    @(posedge uart_vif.clk) uart_vif.needle <= 0;
     repeat(bit_cycles) @(posedge uart_vif.clk);
   end
   // extract stop bit
   if (cfg.tx_has_stop_bit) begin
     trans.stop_bit = uart_vif.utxd;
-    repeat(bit_cycles) @(posedge uart_vif.clk);
+    uart_vif.needle <= 1;
+    //@(posedge uart_vif.clk) uart_vif.needle <= 0;
+    //repeat(bit_cycles) @(posedge uart_vif.clk);
   end
 
   trans.frame_interval = inter_frames;

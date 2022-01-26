@@ -38,7 +38,7 @@ endclass
 class apbuart_wr_rd_test extends apbuart_base_test;
   `uvm_component_utils(apbuart_wr_rd_test)
 
-  reg_wr_rd_seq wr_rd_sq;
+  apbuart_wr_rd_seq wr_rd_sq;
 
   function new (string name = "apbuart_wr_rd_test", uvm_component parent);
     super.new(name, parent);
@@ -46,13 +46,47 @@ class apbuart_wr_rd_test extends apbuart_base_test;
 
   function void build_phase (uvm_phase phase);
     super.build_phase(phase);
-    wr_rd_sq = reg_wr_rd_seq::type_id::create("wr_rd_sq", this);
+    wr_rd_sq = apbuart_wr_rd_seq::type_id::create("wr_rd_sq", this);
   endfunction
 
   task run_phase (uvm_phase phase);
-    cfg.baud_rate = 'd115200;
+    cfg.baud_div = 'd13;
     phase.raise_objection(this);
     wr_rd_sq.start(env.v_sqr);
+    phase.drop_objection(this);
+  endtask
+endclass
+
+class apbuart_tx_basic_test extends apbuart_base_test;
+  `uvm_component_utils(apbuart_tx_basic_test)
+
+  apbuart_tx_seq basic_sq;
+  function new (string name = "apbuart_tx_basic_test", uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase (uvm_phase phase);
+    super.build_phase(phase);
+    basic_sq = apbuart_tx_seq::type_id::create("basic_sq", this);
+  endfunction
+
+  task run_phase (uvm_phase phase);
+  // set config
+    cfg.baud_div = 'd13;
+    cfg.tx_has_parity = 'b0;
+    cfg.rx_has_parity = 'b0;
+    cfg.tx_has_stop_bit = 'b1;
+    cfg.rx_has_stop_bit = 'b1;
+    cfg.parity_type = ODD;
+    cfg.tx_trig_depth = 'h0;
+    cfg.rx_trig_depth = 'h1;
+    cfg.tx_ifs = 'h2;
+
+    phase.raise_objection(this);
+    basic_sq.start(env.v_sqr);
+    while(1) begin
+      #1;
+    end
     phase.drop_objection(this);
   endtask
 endclass
@@ -75,14 +109,14 @@ class apbuart_illegal_test extends apbuart_base_test;
 
   task run_phase (uvm_phase phase);
   // set config
-    cfg.baud_rate = 'd115200;
+    cfg.baud_div = 'd13;
     cfg.tx_has_parity = 'b0;
     cfg.rx_has_parity = 'b0;
     cfg.tx_has_stop_bit = 'b1;
     cfg.rx_has_stop_bit = 'b1;
     cfg.parity_type = ODD;
     cfg.tx_trig_depth = 'h0;
-    cfg.tx_trig_depth = 'h0;
+    cfg.rx_trig_depth = 'h1;
     cfg.tx_ifs = 'h2;
 
     phase.raise_objection(this);
@@ -112,7 +146,7 @@ class apbuart_random_test extends apbuart_base_test;
     // set config randomly
     cfg.randomize() with {
       tx_has_parity == rx_has_parity;
-      baud_rate inside {9600, 19200, 38400, 115200};
+      baud_div inside {168, 84, 41, 13};
       tx_has_stop_bit == rx_has_stop_bit;
     };
 

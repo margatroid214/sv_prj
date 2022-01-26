@@ -33,11 +33,15 @@ task apb_driver::run_phase (uvm_phase phase);
     fork
       @ (negedge apb_vif.presetn);  // apb reset
       forever begin
-        apb_vif.psel    <= 'h0;
-        apb_vif.penable <= 'h0;
-        seq_item_port.get_next_item(trans);   // get transaction and drive
-        drive(trans);
-        seq_item_port.item_done();
+        seq_item_port.try_next_item(trans);   // try get transaction
+        if (trans == null) begin
+          @ (posedge apb_vif.pclk);
+          apb_vif.psel <= 'h0;
+          apb_vif.penable <= 'h0;
+        end else begin
+          drive(trans);
+          seq_item_port.item_done();
+        end
       end
     join_any
     disable fork;
@@ -57,13 +61,17 @@ task apb_driver::reset ();
 endtask
 
 task apb_driver::drive (apb_seq_item trans);
+  repeat(trans.interval) begin    // wait for several cycles as trans interval
+    @(posedge apb_vif.pclk);
+    apb_vif.psel    <= 'h0;
+    apb_vif.penable <= 'h0;
+  end
   @(posedge apb_vif.pclk);
+  apb_vif.penable <= 'h0;
   apb_vif.psel    <= 'h1;
   apb_vif.paddr   <= trans.addr;
   apb_vif.pwdata  <= trans.data;
   apb_vif.pwrite  <= trans.wren;
   @(posedge apb_vif.pclk);
   apb_vif.penable <= 'h1;
-  repeat(trans.interval)    // wait for several cycles as trans interval
-    @(posedge apb_vif.pclk);
 endtask

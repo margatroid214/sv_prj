@@ -13,6 +13,10 @@ class apb_seq_item extends uvm_sequence_item;
     `uvm_field_int(interval, UVM_ALL_ON | UVM_NOCOMPARE)
   `uvm_object_utils_end
 
+  constraint default_interval {
+    interval inside {[1:10]};
+  };
+
   // constructor
   function new (string name = "apb_seq_item");
     super.new(name);

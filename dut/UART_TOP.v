@@ -15,8 +15,12 @@ module    UART_TOP(
     //outputs
     prdata_o,
     utxd_o,
-    uart_int_o
+    uart_int_o,
+    needle      // added by zzx
 );
+input           needle;
+wire test;
+assign test = needle;
 
 input           clk;                 //	ARM clk
 input           clk26m;              //	function clk
