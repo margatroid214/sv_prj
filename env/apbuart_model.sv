@@ -27,6 +27,7 @@ class apbuart_model extends uvm_component;
       apbuart_regs[i] = 'hxxxx;
     end
     // registers initialization
+    apbuart_regs[`UART_TXD]   = 'h0;
     apbuart_regs[`UART_DIV]   = 'hf152;
     apbuart_regs[`UART_CFG]   = 'h34;
     apbuart_regs[`UART_RXTD]  = 'h1;
@@ -57,18 +58,22 @@ class apbuart_model extends uvm_component;
 
   task apb_handle ();
     apb_seq_item trans_i, trans_o;
-    baud_cnt = 16 * apbuart_regs[`UART_DIV][9:0];
+    baud_cnt = 16 * (apbuart_regs[`UART_DIV][9:0] + 1);
 
     forever begin
       bgp_apb.get(trans_i);
       if (trans_i.wren) begin   // apb write transaction
-        case (trans_i.addr[7:0])
+        case (trans_i.addr)
           `UART_TXD : begin
+            apbuart_regs[`UART_TXD] = trans_i.data;
             if (tx_queue.size() < 16) begin
               tx_queue.push_back(trans_i.data);
             end
           end
           `UART_RXD, `UART_RDL, `UART_TDL : ;   // read only
+          `UART_SR : begin    // clear status reg
+            apbuart_regs[`UART_SR] = ~trans_i.data | apbuart_regs[`UART_SR];
+          end
           default : apbuart_regs[trans_i.addr] = trans_i.data; 
         endcase
         if (apbuart_regs[`UART_CFG][14]) // tx fifo reset
@@ -76,13 +81,34 @@ class apbuart_model extends uvm_component;
         if (apbuart_regs[`UART_CFG][15])  // rx fifo reset
           rx_queue.delete();
         // baud count update
-        baud_cnt = 16 * apbuart_regs[`UART_DIV][9:0];
+        baud_cnt = 16 * (apbuart_regs[`UART_DIV][9:0] + 1);
+        // sr reg update
+        if (tx_queue.size() <= apbuart_regs[`UART_TXTD][3:0])
+          apbuart_regs[`UART_SR][0] = 'b1;
       end else begin    // apb read transaction
         trans_o = apb_seq_item::type_id::create("trans_o");
         trans_o.copy(trans_i); 
         trans_o.data = apbuart_regs[trans_o.addr];
-        if (trans_o.addr == `UART_RXD)
-          trans_o.data = rx_queue.pop_front();
+        case (trans_o.addr)
+          `UART_RXD : begin
+            if (rx_queue.size > 0)
+              trans_o.data = rx_queue.pop_front();
+            else
+              trans_o.data = 'h0;
+          end
+          `UART_SR :
+            trans_o.data = {28'h0, apbuart_regs[`UART_SR][3:0]};
+          `UART_RDL :
+            trans_o.data = rx_queue.size(); 
+          `UART_TDL : begin
+            if (tx_queue.size == 0)
+              trans_o.data = 'h0;
+            else
+              trans_o.data = tx_queue.size() - 1; 
+          end
+          `UART_TXD, `UART_DIV, `UART_CFG, `UART_RXTD, `UART_TXTD, `UART_IFS : ;
+          default : trans_o.data = 'h0;   // illegal address return 0
+        endcase
         ap_apb.write(trans_o);
       end
     end  
@@ -117,9 +143,16 @@ class apbuart_model extends uvm_component;
         uart_tr_o.has_parity = apbuart_regs[`UART_CFG][0];
         uart_tr_o.has_stop_bit = apbuart_regs[`UART_CFG][2];
         uart_tr_o.parity_type = apbuart_regs[`UART_CFG][1] ? ODD : EVEN;
-        uart_tr_o.parity = uart_tr_o.calc_parity(uart_tr_o.parity_type);
+        if (uart_tr_o.has_parity)
+          uart_tr_o.parity = uart_tr_o.calc_parity(uart_tr_o.parity_type);
+        else
+          uart_tr_o.parity = 'b0;   // don't care
         uart_tr_o.stop_bit = 'b1;
         uart_tr_o.frame_interval = apbuart_regs[`UART_TDL][5:0] > 1 ? apbuart_regs[`UART_IFS][3:0] : -1;  // -1 means don't care
+        // sr reg update
+        if (tx_queue.size() <= apbuart_regs[`UART_TXTD][3:0]) begin
+          apbuart_regs[`UART_SR][0] = 'b1;
+        end
         // transmit
         transfer_bits = (8 + uart_tr_o.has_stop_bit + uart_tr_o.has_parity);
         if (uart_tr_o.frame_interval != -1)

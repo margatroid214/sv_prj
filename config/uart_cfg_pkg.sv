@@ -5,6 +5,8 @@ package uart_cfg_pkg;
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 
+typedef enum logic {ODD, EVEN} parity_t;
+
 // apbuart global config; mainly for monitor to parse data pack
 class apbuart_cfg extends uvm_object;
   uvm_active_passive_enum is_tx_active = UVM_ACTIVE;
@@ -19,7 +21,7 @@ class apbuart_cfg extends uvm_object;
   rand bit [1:0] rx_has_stop_bit;
 
   // extension
-  rand bit parity_type;
+  rand parity_t parity_type;
   rand bit [3:0] tx_trig_depth;
   rand bit [3:0] rx_trig_depth;
   rand bit [3:0] tx_ifs;

@@ -106,23 +106,19 @@ task uart_monitor::get_tx_pkg();
   // sample data in the middle
   repeat(bit_cycles * 3 / 2) @(posedge uart_vif.clk);
   for (int i = 0; i < 8; i++) begin
-    uart_vif.needle <= 1;
-    @(posedge uart_vif.clk) uart_vif.needle <= 0;
     trans.data[i] = uart_vif.utxd;
     repeat(bit_cycles) @(posedge uart_vif.clk);
   end
   // extract parity 
   if (cfg.tx_has_parity) begin
     trans.parity = uart_vif.utxd;
-    uart_vif.needle <= 1;
-    @(posedge uart_vif.clk) uart_vif.needle <= 0;
     repeat(bit_cycles) @(posedge uart_vif.clk);
+  end else begin
+    trans.parity = 'b0;   //don't care
   end
   // extract stop bit
   if (cfg.tx_has_stop_bit) begin
     trans.stop_bit = uart_vif.utxd;
-    uart_vif.needle <= 1;
-    //@(posedge uart_vif.clk) uart_vif.needle <= 0;
     //repeat(bit_cycles) @(posedge uart_vif.clk);
   end
 

@@ -3,6 +3,10 @@ class apbuart_base_test extends uvm_test;
 
   apbuart_env env;
   apbuart_cfg cfg;
+  virtual uart_if uart_vif;
+  virtual apb_if apb_vif;
+
+  int test_run_cyc = 100000;
 
   function new (string name = "apbuart_base_test", uvm_component parent);
     super.new(name, parent);
@@ -13,6 +17,10 @@ class apbuart_base_test extends uvm_test;
     env = apbuart_env::type_id::create("env", this);
     cfg = apbuart_cfg::type_id::create("cfg", this);
     uvm_config_db#(apbuart_cfg)::set(this, "*", "cfg", cfg);
+    if (!uvm_config_db#(virtual uart_if)::get(this, "*", "uart_vif", uart_vif))
+      `uvm_error(get_type_name(), "did not get virtual bus handle")
+    if (!uvm_config_db#(virtual apb_if)::get(this, "*", "apb_vif", apb_vif))
+      `uvm_error(get_type_name(), "did not get virtual bus handle")
   endfunction
 
   function void report_phase (uvm_phase phase);
@@ -53,6 +61,7 @@ class apbuart_wr_rd_test extends apbuart_base_test;
     cfg.baud_div = 'd13;
     phase.raise_objection(this);
     wr_rd_sq.start(env.v_sqr);
+    repeat(test_run_cyc) @(posedge uart_vif.clk);
     phase.drop_objection(this);
   endtask
 endclass
@@ -84,27 +93,25 @@ class apbuart_tx_basic_test extends apbuart_base_test;
 
     phase.raise_objection(this);
     basic_sq.start(env.v_sqr);
-    while(1) begin
-      #1;
-    end
+    repeat(test_run_cyc) @(posedge uart_vif.clk);
     phase.drop_objection(this);
   endtask
 endclass
 
-class apbuart_illegal_test extends apbuart_base_test;
-  `uvm_component_utils(apbuart_illegal_test)
+class apbuart_stable_test extends apbuart_base_test;
+  `uvm_component_utils(apbuart_stable_test)
 
-  uart_cfg_seq cfg_sq;    
-  illegal_op_seq illegal_sq;
+  apbuart_tx_seq tx_sq;
+  apbuart_illegal_seq perturb_sq;
 
-  function new (string name = "apbuart_wr_rd_test", uvm_component parent);
+  function new (string name = "apbuart_stable_test", uvm_component parent);
     super.new(name, parent);
   endfunction
 
   function void build_phase (uvm_phase phase);
     super.build_phase(phase);
-    cfg_sq = uart_cfg_seq::type_id::create("cfg_sq", this);
-    illegal_sq = illegal_op_seq::type_id::create("illegal_sq", this);
+    tx_sq = apbuart_tx_seq::type_id::create("tx_sq", this);
+    perturb_sq = apbuart_illegal_seq::type_id::create("perturb_sq", this);
   endfunction
 
   task run_phase (uvm_phase phase);
@@ -120,29 +127,30 @@ class apbuart_illegal_test extends apbuart_base_test;
     cfg.tx_ifs = 'h2;
 
     phase.raise_objection(this);
-    cfg_sq.start(env.v_sqr.apb_sqr);
-    illegal_sq.start(env.v_sqr.apb_sqr);
+    tx_sq.start(env.v_sqr);
+    repeat(1000) @(posedge uart_vif.clk);
+    perturb_sq.start(env.v_sqr);
+    repeat(test_run_cyc) @(posedge uart_vif.clk);
     phase.drop_objection(this);
   endtask
 endclass
 
 class apbuart_random_test extends apbuart_base_test;
-  `uvm_component_utils(apbuart_illegal_test)
+  `uvm_component_utils(apbuart_random_test)
 
-  uart_cfg_seq cfg_sq;    
-  uart_tx_seq tx_sq;
+  apbuart_tx_seq rand_sq;
 
-  function new (string name = "apbuart_wr_rd_test", uvm_component parent);
+  function new (string name = "apbuart_random_test", uvm_component parent);
     super.new(name, parent);
   endfunction
 
   function void build_phase (uvm_phase phase);
     super.build_phase(phase);
-    cfg_sq = uart_cfg_seq::type_id::create("cfg_sq", this);
-    tx_sq = uart_tx_seq::type_id::create("tx_sq", this);
+    rand_sq = apbuart_tx_seq::type_id::create("rand_seq", this);
   endfunction
 
   task run_phase (uvm_phase phase);
+    cfg.srandom(2);
     // set config randomly
     cfg.randomize() with {
       tx_has_parity == rx_has_parity;
@@ -151,9 +159,52 @@ class apbuart_random_test extends apbuart_base_test;
     };
 
     phase.raise_objection(this);
-    cfg_sq.start(env.v_sqr.apb_sqr);
-    repeat(16)
-      tx_sq.start(env.v_sqr.apb_sqr);
+    rand_sq.start(env.v_sqr);
+    repeat(test_run_cyc) @(posedge uart_vif.clk);
+    phase.drop_objection(this);
+  endtask
+endclass
+
+class apbuart_irq_test extends apbuart_base_test;
+  `uvm_component_utils(apbuart_irq_test)
+
+  apbuart_cont_seq cont_sq;
+  apbuart_irq_handle_seq irq_sq;
+
+  function new (string name = "apbuart_irq_test", uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase (uvm_phase phase);
+    super.build_phase(phase);
+    cont_sq = apbuart_cont_seq::type_id::create("cont_sq", this);
+    irq_sq = apbuart_irq_handle_seq::type_id::create("irq_sq", this);
+  endfunction
+
+  task run_phase (uvm_phase phase);
+    // set config
+    cfg.baud_div = 'd13;
+    cfg.tx_has_parity = 'b0;
+    cfg.rx_has_parity = 'b0;
+    cfg.tx_has_stop_bit = 'b1;
+    cfg.rx_has_stop_bit = 'b1;
+    cfg.parity_type = ODD;
+    cfg.tx_trig_depth = 'h8;
+    cfg.rx_trig_depth = 'h1;
+    cfg.tx_ifs = 'h2;
+
+    phase.raise_objection(this);
+    cont_sq.start(env.v_sqr);
+    fork
+      begin
+        @(posedge apb_vif.uart_int);
+        repeat(5000) @(posedge uart_vif.clk);   // intense time for ref model to adapt to the real running scheme
+        irq_sq.start(env.v_sqr);
+      end
+      begin
+        repeat(test_run_cyc) @(posedge uart_vif.clk);
+      end
+    join
     phase.drop_objection(this);
   endtask
 endclass

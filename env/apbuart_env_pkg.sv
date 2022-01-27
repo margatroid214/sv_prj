@@ -9,7 +9,9 @@ import uart_cfg_pkg::*;
 import apb_agent_pkg::*;
 import uart_agent_pkg::*;
 
-`include "apbuart_macros.sv"
+`include "../config/apbuart_macros.sv"
+//`include "../agents/apb_agent/apb_if.sv"
+//`include "../agents/uart_agent/uart_if.sv"
 
 `include "vsequencer.sv"
 `include "apb_seq_lib.sv"

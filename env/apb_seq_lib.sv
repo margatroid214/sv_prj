@@ -135,6 +135,23 @@ class check_status_seq extends apb_base_seq;
   endtask
 endclass
 
+class check_irq_seq extends apb_base_seq;
+  `uvm_object_utils(check_irq_seq)
+
+  function new (string name = "clear_irq_seq");
+    super.new(name);
+  endfunction
+
+  task body ();
+    super.body();
+    apb_trans = apb_seq_item::type_id::create("apb_trans");
+    `uvm_do_with(apb_trans, {
+                              apb_trans.wren == 'b0;
+                              apb_trans.addr == `UART_SR;
+                            }); 
+  endtask
+endclass
+
 class clear_irq_seq extends apb_base_seq;
   `uvm_object_utils(clear_irq_seq)
 
@@ -185,7 +202,7 @@ class illegal_op_seq extends apb_base_seq;
     tx_data = {28'h0, cfg.rx_has_stop_bit, cfg.tx_has_stop_bit, cfg.parity_type, cfg.tx_has_parity};
     `uvm_do_with(apb_trans, {
                               apb_trans.wren == 'b1;
-                              apb_trans.addr == `UART_DIV;
+                              apb_trans.addr == `UART_CFG;
                               apb_trans.data[3:0] == tx_data[3:0];
                             }); 
     `uvm_do_with(apb_trans, {

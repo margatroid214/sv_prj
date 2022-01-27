@@ -1,5 +1,3 @@
-typedef enum logic {ODD, EVEN} parity_t;
-
 class uart_seq_item extends uvm_sequence_item;
 
   // uart frame data

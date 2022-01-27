@@ -1,12 +1,19 @@
 import uvm_pkg::*;
 `include "uvm_macros.svh"
-import apb_agent_pkg::*;
-import uart_agent_pkg::*;
-import uart_cfg_pkg::*;
-import apbuart_env_pkg::*;
+`include "../interfaces/apb_if.sv"
+`include "../interfaces/uart_if.sv"
+`include "../config/uart_cfg_pkg.sv"
+`include "../agents/apb_agent/apb_agent_pkg.sv"
+`include "../agents/uart_agent/uart_agent_pkg.sv"
+`include "../env/apbuart_env_pkg.sv"
+`include "../dut/UART_TOP.v"
 
 module top_tb;
 
+  import apb_agent_pkg::*;
+  import uart_agent_pkg::*;
+  import uart_cfg_pkg::*;
+  import apbuart_env_pkg::*;
 
   bit pclk, presetn;
   bit uclk, uresetn;
