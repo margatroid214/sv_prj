@@ -24,7 +24,7 @@ module apbuart_prop (
 
   en_after_sel_roseP: assert property (en_after_sel_rose) else $error($stime, "\t\t FAIL: en_after_sel_rose condition");
 
-  en_sel_fellP: assert property (en_sel_fellP) else $error($stime, "\t\t FAIL: en_sel_fell condition");
+  en_sel_fellP: assert property (en_sel_fell) else $error($stime, "\t\t FAIL: en_sel_fell condition");
 
   no_burstP: assert property (no_burst) else $error($stime, "\t\t FAIL: no_burst condition");
 

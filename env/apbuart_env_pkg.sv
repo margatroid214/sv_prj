@@ -19,6 +19,7 @@ import uart_agent_pkg::*;
 `include "apbuart_vseq_lib.sv"
 `include "apbuart_model.sv"
 `include "apbuart_scoreboard.sv"
+`include "apbuart_coverage.sv"
 `include "apbuart_env.sv"
 `include "apbuart_test_lib.sv"
 

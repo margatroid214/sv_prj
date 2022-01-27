@@ -7,6 +7,7 @@ class apbuart_env extends uvm_env;
   vsequencer          v_sqr;
   apbuart_model       mdl;
   apbuart_scoreboard  scb;
+  apb_cov             cov_apb;
 
   uvm_tlm_analysis_fifo #(apb_seq_item) agt_scb_apb_fifo;
   uvm_tlm_analysis_fifo #(uart_seq_item) agt_scb_uart_fifo;
@@ -29,6 +30,7 @@ class apbuart_env extends uvm_env;
     
     mdl = apbuart_model::type_id::create("mdl", this);
     scb = apbuart_scoreboard::type_id::create("scb", this);
+    cov_apb = apb_cov::type_id::create("cov_apb", this);
 
     agt_scb_apb_fifo = new("agt_scb_apb_fifo", this);
     agt_scb_uart_fifo = new("agt_scb_uart_fifo", this);
@@ -42,6 +44,9 @@ class apbuart_env extends uvm_env;
 
   function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
+    // agent to coverage
+    apb_agt.monitor.ap_mdl.connect(cov_apb.analysis_export);
+
     // agent to scoreboard
     apb_agt.monitor.ap_scb.connect(agt_scb_apb_fifo.analysis_export);
     scb.act_bgp_apb.connect(agt_scb_apb_fifo.blocking_get_export);

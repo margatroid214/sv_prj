@@ -47,7 +47,7 @@ class apbuart_tx_seq extends apbuart_vseq_base;
     cfg_seq.cfg = p_sequencer.cfg;
     tx_seq.cfg = p_sequencer.cfg;
     cfg_seq.start(apb_sqr);
-    repeat(16) begin
+    repeat(8) begin
       tx_seq.start(apb_sqr);
     end
   endtask

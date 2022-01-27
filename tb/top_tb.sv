@@ -7,6 +7,7 @@ import uvm_pkg::*;
 `include "../agents/uart_agent/uart_agent_pkg.sv"
 `include "../env/apbuart_env_pkg.sv"
 `include "../dut/UART_TOP.v"
+`include "apbuart_property.sv"
 
 module top_tb;
 
@@ -37,6 +38,8 @@ module top_tb;
     .uart_int_o (APB.uart_int),
     .needle     (UART.needle)
   );
+
+  bind DUT apbuart_prop topP(.*);
 
   // set virtual interface handling and run test
   initial begin
