@@ -1,16 +1,16 @@
-import uvm_pkg::*;
-`include "uvm_macros.svh"
+`timescale 1ns/1ps
+`include "uvm_pkg.sv"
 `include "../interfaces/apb_if.sv"
 `include "../interfaces/uart_if.sv"
 `include "../config/uart_cfg_pkg.sv"
 `include "../agents/apb_agent/apb_agent_pkg.sv"
 `include "../agents/uart_agent/uart_agent_pkg.sv"
 `include "../env/apbuart_env_pkg.sv"
-`include "../dut/UART_TOP.v"
 `include "apbuart_property.sv"
 
 module top_tb;
 
+  import uvm_pkg::*;
   import apb_agent_pkg::*;
   import uart_agent_pkg::*;
   import uart_cfg_pkg::*;
@@ -35,8 +35,7 @@ module top_tb;
     .urxd_i     (UART.urxd),
     .prdata_o   (APB.prdata),
     .utxd_o     (UART.utxd),
-    .uart_int_o (APB.uart_int),
-    .needle     (UART.needle)
+    .uart_int_o (APB.uart_int)
   );
 
   bind DUT apbuart_prop topP(.*);

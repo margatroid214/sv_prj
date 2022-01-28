@@ -1,4 +1,5 @@
 // module declaration
+`timescale 1ns/1ps
 
 module    UART_TOP(
     //inputs
@@ -15,12 +16,8 @@ module    UART_TOP(
     //outputs
     prdata_o,
     utxd_o,
-    uart_int_o,
-    needle      // added by zzx
+    uart_int_o
 );
-input           needle;
-wire test;
-assign test = needle;
 
 input           clk;                 //	ARM clk
 input           clk26m;              //	function clk

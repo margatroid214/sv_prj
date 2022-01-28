@@ -72,7 +72,8 @@ class apbuart_model extends uvm_component;
           end
           `UART_RXD, `UART_RDL, `UART_TDL : ;   // read only
           `UART_SR : begin    // clear status reg
-            apbuart_regs[`UART_SR] = ~trans_i.data | apbuart_regs[`UART_SR];
+            apbuart_regs[`UART_SR] = ~trans_i.data & apbuart_regs[`UART_SR];
+            //apbuart_regs[`UART_SR][3:0] = 'h0;
           end
           default : apbuart_regs[trans_i.addr] = trans_i.data; 
         endcase
@@ -83,7 +84,7 @@ class apbuart_model extends uvm_component;
         // baud count update
         baud_cnt = 16 * (apbuart_regs[`UART_DIV][9:0] + 1);
         // sr reg update
-        if (tx_queue.size() <= apbuart_regs[`UART_TXTD][3:0])
+        if ((tx_queue.size() - 1) >= apbuart_regs[`UART_TXTD][3:0])
           apbuart_regs[`UART_SR][0] = 'b1;
       end else begin    // apb read transaction
         trans_o = apb_seq_item::type_id::create("trans_o");

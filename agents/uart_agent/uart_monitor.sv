@@ -94,8 +94,6 @@ task uart_monitor::get_tx_pkg();
     begin
       // extract frame interval
       while(1) begin
-        uart_vif.needle <= 1;
-        @(posedge uart_vif.clk) uart_vif.needle <= 0;
         repeat(bit_cycles) @(posedge uart_vif.clk);
         ++inter_frames;
       end

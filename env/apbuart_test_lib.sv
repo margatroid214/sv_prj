@@ -150,6 +150,7 @@ class apbuart_random_test extends apbuart_base_test;
   endfunction
 
   task run_phase (uvm_phase phase);
+    // pick random seed
     cfg.srandom(2);
     // set config randomly
     cfg.randomize() with {
